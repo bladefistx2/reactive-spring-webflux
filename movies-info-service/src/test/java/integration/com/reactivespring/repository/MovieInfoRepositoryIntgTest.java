@@ -23,14 +23,14 @@ class MovieInfoRepositoryIntgTest {
 
     @BeforeEach
     void setUp() {
-        var movieinfos = List.of(new MovieInfo(null, "Batman Begins",
+        var movieInfoList = List.of(new MovieInfo(null, "Batman Begins",
                         2005, List.of("Christian Bale", "Michael Cane"), LocalDate.parse("2005-06-15")),
                 new MovieInfo(null, "The Dark Knight",
                         2008, List.of("Christian Bale", "HeathLedger"), LocalDate.parse("2008-07-18")),
                 new MovieInfo("abc", "Dark Knight Rises",
                         2012, List.of("Christian Bale", "Tom Hardy"), LocalDate.parse("2012-07-20")));
 
-        movieInfoRepository.saveAll(movieinfos)
+        movieInfoRepository.saveAll(movieInfoList)
                 .blockLast();
     }
 
@@ -99,10 +99,7 @@ class MovieInfoRepositoryIntgTest {
         //then
         StepVerifier.create(moviesInfoMono)
                 //.expectNextCount(1)
-                .assertNext(movieInfo1 -> {
-
-                    assertEquals(2021, movieInfo1.getYear());
-                })
+                .assertNext(movieInfo1 -> assertEquals(2021, movieInfo1.getYear()))
                 .verifyComplete();
     }
 
