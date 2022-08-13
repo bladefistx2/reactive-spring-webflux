@@ -9,50 +9,18 @@ import reactor.test.StepVerifier;
 
 import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
-@WebFluxTest(controllers = FluxMonoController.class)
+@WebFluxTest(controllers = FluxAndMonoController.class)
 @AutoConfigureWebTestClient
-public class FluxAndMonoControllerTest {
+class FluxAndMonoControllerTest {
+
     @Autowired
     WebTestClient webTestClient;
 
-    @Test
-    void streamTest() {
-        var stream = webTestClient
-                .get()
-                .uri("/stream")
-                .exchange()
-                .expectStatus()
-                .is2xxSuccessful()
-                .returnResult(Long.class)
-                .getResponseBody();
-
-        StepVerifier.create(stream)
-                .expectNext(0L, 1L, 2L)
-                .thenCancel()
-                .verify();
-    }
 
     @Test
-    void fluxApproach1() {
-
-        var flux = webTestClient
-                .get()
-                .uri("/flux")
-                .exchange()
-                .expectStatus()
-                .is2xxSuccessful()
-                .returnResult(String.class)
-                .getResponseBody();
-
-        StepVerifier.create(flux)
-                .expectNext("123")
-                .verifyComplete();
-    }
-
-    @Test
-    void fluxApproach2() {
+    void flux() {
 
         webTestClient.
                 get()
@@ -60,14 +28,76 @@ public class FluxAndMonoControllerTest {
                 .exchange()
                 .expectStatus()
                 .is2xxSuccessful()
-                .expectBody(String.class)
-                .consumeWith(listEntityExchangeResult -> {
+                .expectBodyList(Integer.class)
+                .hasSize(3);
+    }
 
+    @Test
+    void flux_approach2() {
+
+        var flux = webTestClient.
+                get()
+                .uri("/flux")
+                .exchange()
+                .expectStatus()
+                .is2xxSuccessful()
+                .returnResult(Integer.class)
+                .getResponseBody();
+
+        StepVerifier.create(flux)
+                .expectNext(1,2,3)
+                .verifyComplete();
+    }
+
+    @Test
+    void stream() {
+
+        var flux = webTestClient.
+                get()
+                .uri("/stream")
+                .exchange()
+                .expectStatus()
+                .is2xxSuccessful()
+                .returnResult(Long.class)
+                .getResponseBody();
+
+        StepVerifier.create(flux)
+                .expectNext(0L, 1L,2L,3L)
+                .thenCancel()
+        .verify();
+    }
+
+    @Test
+    void flux_approach3() {
+
+        webTestClient.
+                get()
+                .uri("/flux")
+                .exchange()
+                .expectStatus()
+                .is2xxSuccessful()
+                .expectBodyList(Integer.class)
+                .consumeWith(listEntityExchangeResult -> {
                     var responseBody = listEntityExchangeResult.getResponseBody();
-                    assertEquals("123", responseBody);
+                    assert (Objects.requireNonNull(responseBody).size() == 3);
 
                 });
+    }
 
+    @Test
+    void mono() {
 
+        webTestClient.
+                get()
+                .uri("/mono")
+                .exchange()
+                .expectStatus()
+                .is2xxSuccessful()
+                .expectBody(String.class)
+                .consumeWith(stringEntityExchangeResult -> {
+                    var responseBody = stringEntityExchangeResult.getResponseBody();
+                    assertEquals("hello-world", responseBody);
+
+                });
     }
 }
